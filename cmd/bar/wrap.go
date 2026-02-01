@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -14,9 +15,13 @@ import (
 	gitadapter "github.com/user/blade-agent-runtime/internal/adapters/git"
 	"github.com/user/blade-agent-runtime/internal/core/ledger"
 	"github.com/user/blade-agent-runtime/internal/core/task"
+	"github.com/user/blade-agent-runtime/internal/web"
 )
 
 func wrapCmd() *cobra.Command {
+	var withUI bool
+	var uiPort int
+
 	cmd := &cobra.Command{
 		Use:   "wrap -- <command> [args...]",
 		Short: "Wrap an interactive command and record changes on exit",
@@ -36,6 +41,25 @@ When the command exits, BAR records a step with the diff of all changes.`,
 			if err != nil {
 				return err
 			}
+
+			// Start UI if requested
+			if withUI {
+				addr := fmt.Sprintf(":%d", uiPort)
+				server := web.NewServer(addr, app.TaskManager, app.BarDir)
+				go func() {
+					if err := server.Start(); err != nil {
+						app.Logger.Error("Web UI failed: %v", err)
+					}
+				}()
+				defer server.Stop()
+
+				// Wait a bit for server to start
+				time.Sleep(500 * time.Millisecond)
+				url := fmt.Sprintf("http://localhost%d", uiPort)
+				app.Logger.Info("Web UI running at %s", url)
+				openBrowser(url)
+			}
+
 			task, err := getOrCreateTask(app, args[0])
 			if err != nil {
 				return err
@@ -144,6 +168,8 @@ When the command exits, BAR records a step with the diff of all changes.`,
 			return nil
 		},
 	}
+	cmd.Flags().BoolVar(&withUI, "ui", false, "Start Web UI automatically")
+	cmd.Flags().IntVarP(&uiPort, "port", "p", 8080, "Port for Web UI")
 	return cmd
 }
 
