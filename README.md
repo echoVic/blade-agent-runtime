@@ -20,7 +20,7 @@
 ### 一键安装（推荐）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/echoVic/blade-agent-runtime/master/scripts/install.sh | sh
+curl -fsSL https://echovic.github.io/blade-agent-runtime/install.sh | sh
 ```
 
 ### 使用 Go 安装
@@ -33,10 +33,10 @@ go install github.com/echoVic/blade-agent-runtime/cmd/bar@latest
 
 ```bash
 # 指定安装目录
-BAR_INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/echoVic/blade-agent-runtime/master/scripts/install.sh | sh
+BAR_INSTALL_DIR=/usr/local/bin curl -fsSL https://echovic.github.io/blade-agent-runtime/install.sh | sh
 
 # 指定版本
-BAR_VERSION=v0.0.1 curl -fsSL https://raw.githubusercontent.com/echoVic/blade-agent-runtime/master/scripts/install.sh | sh
+BAR_VERSION=v0.0.1 curl -fsSL https://echovic.github.io/blade-agent-runtime/install.sh | sh
 ```
 
 ## 快速开始
