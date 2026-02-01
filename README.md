@@ -42,11 +42,9 @@ BAR_VERSION=v0.0.1 curl -fsSL https://echovic.github.io/blade-agent-runtime/inst
 ## 快速开始
 
 ```bash
-# 在你的项目中初始化
 cd your-repo
-bar init
 
-# 创建一个任务（自动创建隔离的 worktree）
+# 创建任务（自动初始化，无需 bar init）
 bar task start fix-null-pointer
 
 # 方式 1：包装交互式 agent（推荐）
