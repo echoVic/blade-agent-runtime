@@ -68,6 +68,45 @@ func (e *stringError) Error() string {
 	return e.msg
 }
 
+func initAppWithAutoInit() (*App, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	repoRoot, err := utilpath.FindRepoRoot(cwd)
+	if err != nil {
+		return nil, err
+	}
+	barDir := utilpath.BarDir(repoRoot)
+	cfgPath := filepath.Join(barDir, "config.yaml")
+
+	if _, err := os.Stat(barDir); err != nil {
+		if err := utilpath.EnsureDir(barDir); err != nil {
+			return nil, err
+		}
+		if err := utilpath.EnsureDir(filepath.Join(barDir, "tasks")); err != nil {
+			return nil, err
+		}
+		if err := utilpath.EnsureDir(filepath.Join(barDir, "workspaces")); err != nil {
+			return nil, err
+		}
+		cfg := config.DefaultConfig()
+		cfgManager := config.NewManager(cfgPath)
+		if err := cfgManager.Save(cfg); err != nil {
+			return nil, err
+		}
+		state := task.DefaultState()
+		if err := task.SaveState(filepath.Join(barDir, "state.json"), state); err != nil {
+			return nil, err
+		}
+		if err := ensureGitignore(repoRoot); err != nil {
+			return nil, err
+		}
+	}
+
+	return initApp(true)
+}
+
 func ensureBarInit(app *App) error {
 	if _, err := os.Stat(app.BarDir); err == nil {
 		return nil

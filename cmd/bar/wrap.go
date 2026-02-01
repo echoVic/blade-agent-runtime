@@ -8,9 +8,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jaevor/go-nanoid"
 	"github.com/spf13/cobra"
 
+	gitadapter "github.com/user/blade-agent-runtime/internal/adapters/git"
 	"github.com/user/blade-agent-runtime/internal/core/ledger"
+	"github.com/user/blade-agent-runtime/internal/core/task"
 )
 
 func wrapCmd() *cobra.Command {
@@ -29,11 +32,11 @@ The command runs in the task's isolated workspace with full TTY support.
 When the command exits, BAR records a step with the diff of all changes.`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			app, err := initApp(true)
+			app, err := initAppWithAutoInit()
 			if err != nil {
 				return err
 			}
-			task, err := requireActiveTask(app)
+			task, err := getOrCreateTask(app, args[0])
 			if err != nil {
 				return err
 			}
@@ -142,4 +145,54 @@ When the command exits, BAR records a step with the diff of all changes.`,
 		},
 	}
 	return cmd
+}
+
+func getOrCreateTask(app *App, cmdName string) (*task.Task, error) {
+	activeTask, err := app.TaskManager.GetActive()
+	if err == nil && activeTask != nil {
+		return activeTask, nil
+	}
+
+	name := "wrap-" + sanitizeName(cmdName)
+	base := ""
+	_, branch, err := gitadapter.CurrentHEAD(app.RepoRoot)
+	if err != nil {
+		return nil, err
+	}
+	if branch != "" {
+		base = branch
+	} else {
+		head, _, err := gitadapter.CurrentHEAD(app.RepoRoot)
+		if err != nil {
+			return nil, err
+		}
+		base = head
+	}
+
+	gen, err := nanoid.Standard(8)
+	if err != nil {
+		return nil, err
+	}
+	id := gen()
+	branchName := app.Config.Git.BranchPrefix + name + "-" + id
+	workspacePath := filepath.Join(app.BarDir, "workspaces", id)
+
+	if _, err := app.WorkspaceManager.Create(id, branchName, base); err != nil {
+		return nil, err
+	}
+
+	t, err := app.TaskManager.Create(id, name, base, branchName, workspacePath)
+	if err != nil {
+		_ = app.WorkspaceManager.Delete(workspacePath)
+		return nil, err
+	}
+
+	if err := app.TaskManager.SetActive(t.ID); err != nil {
+		return nil, err
+	}
+
+	app.Logger.Info("Created task: %s (id: %s)", t.Name, t.ID)
+	app.Logger.Info("Workspace: %s", t.WorkspacePath)
+
+	return t, nil
 }
