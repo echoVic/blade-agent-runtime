@@ -55,7 +55,7 @@ When the command exits, BAR records a step with the diff of all changes.`,
 
 				// Wait a bit for server to start
 				time.Sleep(500 * time.Millisecond)
-				url := fmt.Sprintf("http://localhost%d", uiPort)
+				url := fmt.Sprintf("http://localhost:%d", uiPort)
 				app.Logger.Info("Web UI running at %s", url)
 				openBrowser(url)
 			}
