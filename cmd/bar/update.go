@@ -16,7 +16,7 @@ const (
 	repoOwner      = "echoVic"
 	repoName       = "blade-agent-runtime"
 	installURL     = "https://echovic.github.io/blade-agent-runtime/install.sh"
-	currentVersion = "0.0.11"
+	currentVersion = "0.0.12"
 )
 
 func updateCmd() *cobra.Command {
