@@ -55,6 +55,7 @@ func Execute() error {
 	rootCmd.AddCommand(logCmd())
 	rootCmd.AddCommand(updateCmd())
 	rootCmd.AddCommand(versionCmd())
+	rootCmd.AddCommand(uiCmd())
 	return rootCmd.Execute()
 }
 

@@ -1,5 +1,4 @@
 # Binaries
-bar
 *.exe
 *.exe~
 *.dll
@@ -25,13 +24,19 @@ go.work
 .DS_Store
 Thumbs.db
 
-# Build
-dist/
+# Build output
 bin/
 
-# BAR
+# BAR runtime data
 .bar/
 
 # Local development
 .env
 .env.local
+
+# Frontend
+web/node_modules/
+web/dist/
+
+# Embedded frontend dist (built into Go binary)
+internal/web/dist/

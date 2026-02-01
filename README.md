@@ -95,7 +95,10 @@ Task 中的每一个操作，包括：
 | `bar task start <name>` | 创建新任务 |
 | `bar task list` | 列出所有任务 |
 | `bar task switch <id>` | 切换到指定任务 |
-| `bar task close` | 关闭当前任务 |
+| `bar task close` | 关闭当前任务并删除 worktree |
+| `bar task close --keep` | 关闭任务但保留 worktree |
+| `bar task close --delete` | 关闭任务并删除所有记录 |
+| `bar task close --force` | 强制关闭（忽略未提交更改） |
 | `bar wrap -- <cmd>` | 包装交互式命令，退出时记录变更 |
 | `bar run -- <cmd>` | 执行一次性命令并记录 |
 | `bar diff` | 查看当前变更 |
@@ -108,6 +111,24 @@ Task 中的每一个操作，包括：
 | `bar update` | 更新到最新版本 |
 | `bar update --check` | 检查是否有新版本 |
 | `bar version` | 显示版本信息 |
+| `bar ui` | 启动 Web UI 审计界面 |
+| `bar ui -p 3000` | 指定端口启动 Web UI |
+
+## Web UI
+
+BAR 提供了一个 Web UI 用于审计任务和查看操作日志：
+
+```bash
+bar ui              # 启动 Web UI (默认端口 8080)
+bar ui -p 3000      # 指定端口
+bar ui --no-open    # 不自动打开浏览器
+```
+
+功能：
+- 查看所有任务列表
+- 查看任务详情和 Ledger 记录
+- 查看每个步骤的 Diff
+- WebSocket 实时更新
 
 ## 目录结构
 
@@ -130,7 +151,6 @@ your-repo/
 
 - ❌ 多 agent 协作
 - ❌ 云端 / SaaS / 账号体系
-- ❌ UI（桌面端）
 - ❌ 通用插件市场
 - ❌ 深度 syscall 级沙箱
 - ❌ Windows 完整支持（先 Mac/Linux）

@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	repoOwner   = "echoVic"
-	repoName    = "blade-agent-runtime"
-	installURL  = "https://echovic.github.io/blade-agent-runtime/install.sh"
-	currentVersion = "0.0.6"
+	repoOwner      = "echoVic"
+	repoName       = "blade-agent-runtime"
+	installURL     = "https://echovic.github.io/blade-agent-runtime/install.sh"
+	currentVersion = "0.0.7"
 )
 
 func updateCmd() *cobra.Command {
@@ -25,7 +25,7 @@ func updateCmd() *cobra.Command {
 		Short: "Update BAR to the latest version",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			check, _ := cmd.Flags().GetBool("check")
-			
+
 			latest, err := getLatestVersion()
 			if err != nil {
 				return fmt.Errorf("failed to check latest version: %w", err)
