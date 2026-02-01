@@ -26,7 +26,7 @@ for OS in darwin linux; do
 done
 
 echo "==> Committing version bump..."
-git add cmd/bar/update.go
+git add -f cmd/bar/update.go
 git commit -m "chore: bump version to $VERSION" || true
 
 echo "==> Creating tag $TAG..."
