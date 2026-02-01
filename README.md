@@ -105,6 +105,9 @@ Task 中的每一个操作，包括：
 | `bar status` | 查看当前状态 |
 | `bar log` | 查看操作日志 |
 | `bar log --format markdown` | Markdown 格式日志 |
+| `bar update` | 更新到最新版本 |
+| `bar update --check` | 检查是否有新版本 |
+| `bar version` | 显示版本信息 |
 
 ## 目录结构
 

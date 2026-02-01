@@ -53,6 +53,8 @@ func Execute() error {
 	rootCmd.AddCommand(rollbackCmd())
 	rootCmd.AddCommand(statusCmd())
 	rootCmd.AddCommand(logCmd())
+	rootCmd.AddCommand(updateCmd())
+	rootCmd.AddCommand(versionCmd())
 	return rootCmd.Execute()
 }
 
