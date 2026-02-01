@@ -26,6 +26,7 @@ Thumbs.db
 
 # Build output
 bin/
+dist/
 
 # BAR runtime data
 .bar/
