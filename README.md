@@ -49,14 +49,20 @@ bar init
 # 创建一个任务（自动创建隔离的 worktree）
 bar task start fix-null-pointer
 
-# 在隔离区运行任何 AI agent
-bar run -- claude "fix the null pointer exception in main.go"
+# 方式 1：包装交互式 agent（推荐）
+bar wrap -- claude           # Claude Code
+bar wrap -- aider            # Aider
+bar wrap -- cursor .         # Cursor
+
+# 方式 2：运行一次性命令
+bar run -- npm install lodash
+bar run -- sh -c 'echo "hello" > test.txt'
 
 # 查看 agent 做了什么
 bar diff
 
 # 满意就应用到主分支
-bar apply
+bar apply --message "feat: fixed by AI"
 
 # 不满意就回滚
 bar rollback
@@ -90,12 +96,17 @@ Task 中的每一个操作，包括：
 | `bar init` | 初始化 BAR（创建 `.bar/` 目录） |
 | `bar task start <name>` | 创建新任务 |
 | `bar task list` | 列出所有任务 |
-| `bar run -- <cmd>` | 在当前任务的隔离区执行命令 |
+| `bar task switch <id>` | 切换到指定任务 |
+| `bar task close` | 关闭当前任务 |
+| `bar wrap -- <cmd>` | 包装交互式命令，退出时记录变更 |
+| `bar run -- <cmd>` | 执行一次性命令并记录 |
 | `bar diff` | 查看当前变更 |
-| `bar apply` | 应用变更到主分支 |
+| `bar diff --format json` | JSON 格式输出 |
+| `bar apply --message "msg"` | 应用变更到主分支 |
 | `bar rollback` | 回滚变更 |
 | `bar status` | 查看当前状态 |
 | `bar log` | 查看操作日志 |
+| `bar log --format markdown` | Markdown 格式日志 |
 
 ## 目录结构
 
