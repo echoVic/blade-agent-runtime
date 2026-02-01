@@ -1,87 +1,78 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
-VERSION="${1:-latest}"
-INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
+REPO="echoVic/blade-agent-runtime"
+BINARY="bar"
+INSTALL_DIR="${BAR_INSTALL_DIR:-$HOME/.local/bin}"
 
-echo "Installing Blade Agent Runtime (BAR)..."
+get_os() {
+    case "$(uname -s)" in
+        Linux*)  echo "linux" ;;
+        Darwin*) echo "darwin" ;;
+        *)       echo "unsupported" ;;
+    esac
+}
 
-# Detect OS and architecture
-OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-ARCH=$(uname -m)
+get_arch() {
+    case "$(uname -m)" in
+        x86_64|amd64) echo "amd64" ;;
+        arm64|aarch64) echo "arm64" ;;
+        *)            echo "unsupported" ;;
+    esac
+}
 
-case "$ARCH" in
-    x86_64)
-        ARCH="amd64"
-        ;;
-    aarch64|arm64)
-        ARCH="arm64"
-        ;;
-    *)
-        echo "Unsupported architecture: $ARCH"
-        exit 1
-        ;;
-esac
+main() {
+    OS=$(get_os)
+    ARCH=$(get_arch)
 
-case "$OS" in
-    darwin|linux)
-        ;;
-    *)
-        echo "Unsupported OS: $OS"
-        exit 1
-        ;;
-esac
-
-echo "Detected: $OS/$ARCH"
-
-# Download URL (placeholder - update when releases are available)
-if [ "$VERSION" = "latest" ]; then
-    DOWNLOAD_URL="https://github.com/user/blade-agent-runtime/releases/latest/download/bar-${OS}-${ARCH}"
-else
-    DOWNLOAD_URL="https://github.com/user/blade-agent-runtime/releases/download/${VERSION}/bar-${OS}-${ARCH}"
-fi
-
-echo "Downloading from: $DOWNLOAD_URL"
-
-# For now, build from source if binary not available
-if ! curl -fsSL "$DOWNLOAD_URL" -o /tmp/bar 2>/dev/null; then
-    echo "Binary not available, building from source..."
-    
-    # Check if Go is installed
-    if ! command -v go &> /dev/null; then
-        echo "Go is not installed. Please install Go 1.21+ first."
-        echo "  brew install go  # macOS"
-        echo "  apt install golang  # Ubuntu/Debian"
+    if [ "$OS" = "unsupported" ] || [ "$ARCH" = "unsupported" ]; then
+        echo "Error: Unsupported OS or architecture"
+        echo "Please install manually: go install github.com/$REPO/cmd/bar@latest"
         exit 1
     fi
-    
-    # Build from source
-    TEMP_DIR=$(mktemp -d)
-    cd "$TEMP_DIR"
-    
-    echo "Cloning repository..."
-    git clone --depth 1 https://github.com/user/blade-agent-runtime.git
-    cd blade-agent-runtime
-    
-    echo "Building..."
-    go build -o /tmp/bar ./cmd/bar
-    
-    cd /
-    rm -rf "$TEMP_DIR"
-fi
 
-# Install binary
-echo "Installing to $INSTALL_DIR/bar..."
-sudo mv /tmp/bar "$INSTALL_DIR/bar"
-sudo chmod +x "$INSTALL_DIR/bar"
+    VERSION="${BAR_VERSION:-latest}"
+    if [ "$VERSION" = "latest" ]; then
+        VERSION=$(curl -sL "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+    fi
 
-echo ""
-echo "✅ BAR installed successfully!"
-echo ""
-echo "Get started:"
-echo "  cd your-project"
-echo "  bar init"
-echo "  bar task start my-task"
-echo "  bar run -- your-agent-command"
-echo ""
-echo "For more information: bar --help"
+    if [ -z "$VERSION" ]; then
+        echo "Error: Could not determine version"
+        exit 1
+    fi
+
+    FILENAME="${BINARY}_${OS}_${ARCH}.tar.gz"
+    URL="https://github.com/$REPO/releases/download/$VERSION/$FILENAME"
+
+    echo "Installing $BINARY $VERSION ($OS/$ARCH)..."
+
+    TMPDIR=$(mktemp -d)
+    trap "rm -rf $TMPDIR" EXIT
+
+    echo "Downloading $URL..."
+    if ! curl -sL "$URL" -o "$TMPDIR/$FILENAME"; then
+        echo "Error: Download failed"
+        echo "Please install manually: go install github.com/$REPO/cmd/bar@latest"
+        exit 1
+    fi
+
+    echo "Extracting..."
+    tar -xzf "$TMPDIR/$FILENAME" -C "$TMPDIR"
+
+    echo "Installing to $INSTALL_DIR..."
+    mkdir -p "$INSTALL_DIR"
+    mv "$TMPDIR/$BINARY" "$INSTALL_DIR/$BINARY"
+    chmod +x "$INSTALL_DIR/$BINARY"
+
+    if ! echo "$PATH" | grep -q "$INSTALL_DIR"; then
+        echo ""
+        echo "Add this to your shell profile:"
+        echo "  export PATH=\"\$PATH:$INSTALL_DIR\""
+    fi
+
+    echo ""
+    echo "✓ $BINARY $VERSION installed successfully!"
+    echo "  Run 'bar --help' to get started"
+}
+
+main
