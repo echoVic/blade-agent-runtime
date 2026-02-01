@@ -15,12 +15,33 @@
 | 中断后无法恢复 | Task 状态持久化，支持 resume |
 | 想试多种方案对比 | 多个 task 并行，互不干扰 |
 
+## 安装
+
+### 一键安装（推荐）
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/echoVic/blade-agent-runtime/master/scripts/install.sh | sh
+```
+
+### 使用 Go 安装
+
+```bash
+go install github.com/echoVic/blade-agent-runtime/cmd/bar@latest
+```
+
+### 自定义安装
+
+```bash
+# 指定安装目录
+BAR_INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/echoVic/blade-agent-runtime/master/scripts/install.sh | sh
+
+# 指定版本
+BAR_VERSION=v0.0.1 curl -fsSL https://raw.githubusercontent.com/echoVic/blade-agent-runtime/master/scripts/install.sh | sh
+```
+
 ## 快速开始
 
 ```bash
-# 安装（Go 1.21+）
-go install github.com/user/blade-agent-runtime/cmd/bar@latest
-
 # 在你的项目中初始化
 cd your-repo
 bar init
