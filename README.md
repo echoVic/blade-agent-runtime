@@ -99,8 +99,8 @@ Task 中的每一个操作，包括：
 | `bar task close --keep` | 关闭任务但保留 worktree |
 | `bar task close --delete` | 关闭任务并删除所有记录 |
 | `bar task close --force` | 强制关闭（忽略未提交更改） |
-| `bar wrap -- <cmd>` | 包装交互式命令，退出时记录变更 |
-| `bar wrap --ui -- <cmd>` | 包装命令并自动启动 Web UI |
+| `bar wrap -- <cmd>` | 包装交互式命令，自动启动 Web UI |
+| `bar wrap --no-ui -- <cmd>` | 包装命令但不启动 Web UI |
 | `bar run -- <cmd>` | 执行一次性命令并记录 |
 | `bar diff` | 查看当前变更 |
 | `bar diff --format json` | JSON 格式输出 |

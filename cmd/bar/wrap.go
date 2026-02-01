@@ -19,7 +19,7 @@ import (
 )
 
 func wrapCmd() *cobra.Command {
-	var withUI bool
+	var noUI bool
 	var uiPort int
 
 	cmd := &cobra.Command{
@@ -42,8 +42,8 @@ When the command exits, BAR records a step with the diff of all changes.`,
 				return err
 			}
 
-			// Start UI if requested
-			if withUI {
+			// Start UI by default (unless --no-ui is set)
+			if !noUI {
 				addr := fmt.Sprintf(":%d", uiPort)
 				server := web.NewServer(addr, app.TaskManager, app.BarDir)
 				go func() {
@@ -168,7 +168,7 @@ When the command exits, BAR records a step with the diff of all changes.`,
 			return nil
 		},
 	}
-	cmd.Flags().BoolVar(&withUI, "ui", false, "Start Web UI automatically")
+	cmd.Flags().BoolVar(&noUI, "no-ui", false, "Disable Web UI")
 	cmd.Flags().IntVarP(&uiPort, "port", "p", 8080, "Port for Web UI")
 	return cmd
 }
