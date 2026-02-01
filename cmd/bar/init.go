@@ -68,6 +68,35 @@ func (e *stringError) Error() string {
 	return e.msg
 }
 
+func ensureBarInit(app *App) error {
+	if _, err := os.Stat(app.BarDir); err == nil {
+		return nil
+	}
+	if err := utilpath.EnsureDir(app.BarDir); err != nil {
+		return err
+	}
+	if err := utilpath.EnsureDir(filepath.Join(app.BarDir, "tasks")); err != nil {
+		return err
+	}
+	if err := utilpath.EnsureDir(filepath.Join(app.BarDir, "workspaces")); err != nil {
+		return err
+	}
+	cfg := config.DefaultConfig()
+	cfgManager := config.NewManager(app.ConfigPath)
+	if err := cfgManager.Save(cfg); err != nil {
+		return err
+	}
+	state := task.DefaultState()
+	if err := task.SaveState(filepath.Join(app.BarDir, "state.json"), state); err != nil {
+		return err
+	}
+	if err := ensureGitignore(app.RepoRoot); err != nil {
+		return err
+	}
+	app.Logger.Info("Initialized BAR in %s", app.BarDir)
+	return nil
+}
+
 func ensureGitignore(repoRoot string) error {
 	path := filepath.Join(repoRoot, ".gitignore")
 	lines := []string{}

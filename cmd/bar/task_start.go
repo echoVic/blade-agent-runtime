@@ -17,8 +17,11 @@ func taskStartCmd() *cobra.Command {
 		Short: "Create a new task",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			app, err := initApp(true)
+			app, err := initApp(false)
 			if err != nil {
+				return err
+			}
+			if err := ensureBarInit(app); err != nil {
 				return err
 			}
 			name := args[0]
