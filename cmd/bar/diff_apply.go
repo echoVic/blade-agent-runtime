@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -27,6 +28,7 @@ func diffCmd() *cobra.Command {
 			stepID, _ := cmd.Flags().GetString("step")
 			statOnly, _ := cmd.Flags().GetBool("stat")
 			output, _ := cmd.Flags().GetString("output")
+			format, _ := cmd.Flags().GetString("format")
 			if stepID != "" {
 				taskDir := filepath.Join(app.BarDir, "tasks", task.ID)
 				ledgerManager := ledger.NewManager(taskDir)
@@ -37,13 +39,16 @@ func diffCmd() *cobra.Command {
 				if step == nil {
 					return errors.New("step not found")
 				}
-				if statOnly {
+				if statOnly || format == "stat" {
 					if step.DiffStat != nil {
 						app.Logger.Info("%d files changed, %d insertions(+), %d deletions(-)", step.DiffStat.Files, step.DiffStat.Additions, step.DiffStat.Deletions)
 						return nil
 					}
 					app.Logger.Info("0 files changed")
 					return nil
+				}
+				if format == "json" {
+					return outputDiffJSON(app, step.DiffStat, nil, output)
 				}
 				if step.Artifacts != nil && step.Artifacts.Patch != "" {
 					patchPath := filepath.Join(taskDir, step.Artifacts.Patch)
@@ -63,9 +68,18 @@ func diffCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if statOnly {
+			if statOnly || format == "stat" {
 				app.Logger.Info("%d files changed, %d insertions(+), %d deletions(-)", result.Files, result.Additions, result.Deletions)
 				return nil
+			}
+			if format == "json" {
+				stat := &ledger.DiffStat{
+					Files:     result.Files,
+					Additions: result.Additions,
+					Deletions: result.Deletions,
+					FileList:  result.FileList,
+				}
+				return outputDiffJSON(app, stat, result.Patch, output)
 			}
 			if output != "" {
 				return os.WriteFile(output, result.Patch, 0o644)
@@ -77,7 +91,37 @@ func diffCmd() *cobra.Command {
 	cmd.Flags().String("step", "", "show diff for a specific step")
 	cmd.Flags().Bool("stat", false, "show stat only")
 	cmd.Flags().String("output", "", "write diff to file")
+	cmd.Flags().String("format", "patch", "output format: patch, stat, json")
 	return cmd
+}
+
+func outputDiffJSON(app *App, stat *ledger.DiffStat, patch []byte, output string) error {
+	type jsonOutput struct {
+		Files     int      `json:"files"`
+		Additions int      `json:"additions"`
+		Deletions int      `json:"deletions"`
+		FileList  []string `json:"file_list,omitempty"`
+		Patch     string   `json:"patch,omitempty"`
+	}
+	out := jsonOutput{}
+	if stat != nil {
+		out.Files = stat.Files
+		out.Additions = stat.Additions
+		out.Deletions = stat.Deletions
+		out.FileList = stat.FileList
+	}
+	if patch != nil {
+		out.Patch = string(patch)
+	}
+	data, err := json.MarshalIndent(out, "", "  ")
+	if err != nil {
+		return err
+	}
+	if output != "" {
+		return os.WriteFile(output, data, 0o644)
+	}
+	app.Logger.Info("%s", string(data))
+	return nil
 }
 
 func applyCmd() *cobra.Command {
