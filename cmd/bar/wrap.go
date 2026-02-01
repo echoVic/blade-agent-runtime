@@ -165,17 +165,9 @@ When the command exits, BAR records a step with the diff of all changes.`,
 			app.Logger.Info("Step %s recorded", stepID)
 			app.Logger.Info("Files changed: %d (+%d, -%d)", diffResult.Files, diffResult.Additions, diffResult.Deletions)
 
-			// If UI is running, wait for user to close it
+			// Stop UI server if running
 			if uiServer != nil {
-				app.Logger.Info("")
-				app.Logger.Info("Web UI still running. Press Ctrl+C to exit.")
-
-				waitChan := make(chan os.Signal, 1)
-				signal.Notify(waitChan, syscall.SIGINT, syscall.SIGTERM)
-				<-waitChan
-
 				uiServer.Stop()
-				app.Logger.Info("Web UI stopped.")
 			}
 
 			return nil
