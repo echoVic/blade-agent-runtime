@@ -115,7 +115,6 @@ Task 中的每一个操作，包括：
 | `bar ui -p 3000` | 指定端口启动 Web UI |
 
 ## Web UI
-
 BAR 提供了一个 Web UI 用于审计任务和查看操作日志：
 
 ```bash
@@ -124,11 +123,12 @@ bar ui -p 3000      # 指定端口
 bar ui --no-open    # 不自动打开浏览器
 ```
 
-功能：
-- 查看所有任务列表
-- 查看任务详情和 Ledger 记录
-- 查看每个步骤的 Diff
-- WebSocket 实时更新
+**主要功能 (v0.0.8)**：
+- **现代化深色主题**：基于 Zinc 色系，Vercel/Linear 风格。
+- **Split View (分栏视图)**：左侧 Timeline，右侧 Monaco Editor Diff 视图。
+- **智能跳转**：首页自动跳转到当前活跃任务。
+- **实时 Diff**：选中步骤即可查看代码变更，支持语法高亮。
+- **WebSocket**：实时更新任务状态和日志。
 
 ## 目录结构
 

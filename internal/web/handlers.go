@@ -87,7 +87,11 @@ func (s *Server) handleDiff(w http.ResponseWriter, r *http.Request) {
 	}
 
 	taskID, stepID := parts[0], parts[1]
-	diffPath := filepath.Join(s.barDir, "tasks", taskID, "artifacts", stepID+".diff")
+	// Try .patch first, then .diff (for backward compatibility if any)
+	diffPath := filepath.Join(s.barDir, "tasks", taskID, "artifacts", stepID+".patch")
+	if _, err := s.ledgerReader.ReadFile(diffPath); err != nil {
+		diffPath = filepath.Join(s.barDir, "tasks", taskID, "artifacts", stepID+".diff")
+	}
 
 	data, err := s.ledgerReader.ReadFile(diffPath)
 	if err != nil {
