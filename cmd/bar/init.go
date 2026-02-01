@@ -9,6 +9,7 @@ import (
 
 	"github.com/user/blade-agent-runtime/internal/core/config"
 	"github.com/user/blade-agent-runtime/internal/core/task"
+	utillog "github.com/user/blade-agent-runtime/internal/util/log"
 	utilpath "github.com/user/blade-agent-runtime/internal/util/path"
 )
 
@@ -43,10 +44,8 @@ func initCmd() *cobra.Command {
 			if err := task.SaveState(filepath.Join(app.BarDir, "state.json"), state); err != nil {
 				return err
 			}
-			if err := ensureGitignore(app.RepoRoot); err != nil {
-				return err
-			}
 			app.Logger.Info("Initialized BAR in %s", app.BarDir)
+			checkGitignore(app.RepoRoot, app.Logger)
 			return nil
 		},
 	}
@@ -99,12 +98,14 @@ func initAppWithAutoInit() (*App, error) {
 		if err := task.SaveState(filepath.Join(barDir, "state.json"), state); err != nil {
 			return nil, err
 		}
-		if err := ensureGitignore(repoRoot); err != nil {
-			return nil, err
-		}
 	}
 
-	return initApp(true)
+	app, err := initApp(true)
+	if err != nil {
+		return nil, err
+	}
+	checkGitignore(repoRoot, app.Logger)
+	return app, nil
 }
 
 func ensureBarInit(app *App) error {
@@ -129,39 +130,21 @@ func ensureBarInit(app *App) error {
 	if err := task.SaveState(filepath.Join(app.BarDir, "state.json"), state); err != nil {
 		return err
 	}
-	if err := ensureGitignore(app.RepoRoot); err != nil {
-		return err
-	}
 	app.Logger.Info("Initialized BAR in %s", app.BarDir)
+	checkGitignore(app.RepoRoot, app.Logger)
 	return nil
 }
 
-func ensureGitignore(repoRoot string) error {
+func checkGitignore(repoRoot string, logger *utillog.Logger) {
 	path := filepath.Join(repoRoot, ".gitignore")
-	lines := []string{}
 	data, err := os.ReadFile(path)
-	if err == nil {
-		for _, line := range strings.Split(string(data), "\n") {
-			if strings.TrimSpace(line) == "" {
-				lines = append(lines, line)
-				continue
-			}
-			lines = append(lines, line)
-		}
+	if err != nil {
+		logger.Info("Tip: Add '.bar/' to your .gitignore")
+		return
 	}
-	want := []string{".bar/", ".bar/workspaces/"}
-	existing := map[string]bool{}
-	for _, line := range lines {
-		existing[strings.TrimSpace(line)] = true
+
+	content := string(data)
+	if !strings.Contains(content, ".bar/") && !strings.Contains(content, ".bar") {
+		logger.Info("Tip: Add '.bar/' to your .gitignore")
 	}
-	for _, w := range want {
-		if !existing[w] {
-			lines = append(lines, w)
-		}
-	}
-	out := strings.Join(lines, "\n")
-	if !strings.HasSuffix(out, "\n") {
-		out += "\n"
-	}
-	return os.WriteFile(path, []byte(out), 0o644)
 }
