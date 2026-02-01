@@ -4,6 +4,8 @@
 
 **一句话价值**：让任何 agent（你自己的或第三方 CLI）在隔离区里干活，并且**每一步可审计、可回滚、可恢复**。
 
+![BAR Web UI](assets/homepage.png)
+
 ## 为什么需要 BAR？
 
 当你使用 Claude Code、Cursor、Copilot 等 AI Coding Agent 时：
@@ -124,12 +126,13 @@ bar ui -p 3000      # 指定端口
 bar ui --no-open    # 不自动打开浏览器
 ```
 
-**主要功能 (v0.0.8)**：
-- **现代化深色主题**：基于 Zinc 色系，Vercel/Linear 风格。
-- **Split View (分栏视图)**：左侧 Timeline，右侧 Monaco Editor Diff 视图。
-- **智能跳转**：首页自动跳转到当前活跃任务。
-- **实时 Diff**：选中步骤即可查看代码变更，支持语法高亮。
-- **WebSocket**：实时更新任务状态和日志。
+**主要功能 (v0.0.13)**：
+- **实时 Diff 推送**：Agent 运行时实时查看代码变更，无需等待退出
+- **Side-by-Side Diff**：Monaco DiffEditor 并排对比视图，支持语法高亮
+- **隐藏未更改行**：自动折叠大段未更改代码，点击可展开
+- **可折叠面板**：左侧导航栏和任务详情面板均支持展开/收起
+- **现代化深色主题**：基于 Zinc 色系，Vercel/Linear 风格
+- **WebSocket 实时更新**：任务状态和日志实时同步
 
 ## 目录结构
 

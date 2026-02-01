@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
+	"runtime"
 	"syscall"
 
 	"github.com/spf13/cobra"
@@ -65,11 +67,16 @@ func uiCmd() *cobra.Command {
 }
 
 func openBrowser(url string) {
-	// Try different commands to open browser
-	for _, cmd := range []string{"open", "xdg-open", "start"} {
-		if _, err := os.Stat("/usr/bin/" + cmd); err == nil || cmd == "start" {
-			syscall.Exec("/usr/bin/"+cmd, []string{cmd, url}, os.Environ())
-			return
-		}
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "darwin":
+		cmd = exec.Command("open", url)
+	case "linux":
+		cmd = exec.Command("xdg-open", url)
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "start", url)
+	default:
+		return
 	}
+	cmd.Start()
 }

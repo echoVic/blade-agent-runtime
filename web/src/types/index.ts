@@ -54,3 +54,12 @@ export interface WebSocketMessage {
   type: string;
   data: unknown;
 }
+
+export interface LiveDiffData {
+  task_id: string;
+  files: number;
+  additions: number;
+  deletions: number;
+  file_list: string[];
+  patch: string;
+}

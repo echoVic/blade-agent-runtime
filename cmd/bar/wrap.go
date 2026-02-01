@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -9,8 +10,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/creack/pty"
 	"github.com/jaevor/go-nanoid"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 
 	gitadapter "github.com/user/blade-agent-runtime/internal/adapters/git"
 	"github.com/user/blade-agent-runtime/internal/core/ledger"
@@ -69,9 +72,6 @@ When the command exits, BAR records a step with the diff of all changes.`,
 
 			childCmd := exec.Command(args[0], args[1:]...)
 			childCmd.Dir = task.WorkspacePath
-			childCmd.Stdin = os.Stdin
-			childCmd.Stdout = os.Stdout
-			childCmd.Stderr = os.Stderr
 			childCmd.Env = append(os.Environ(),
 				"BAR_ACTIVE=true",
 				"BAR_TASK_ID="+task.ID,
@@ -81,13 +81,37 @@ When the command exits, BAR records a step with the diff of all changes.`,
 				"BAR_REPO_ROOT="+task.RepoRoot,
 			)
 
+			// Start command with PTY for interactive support
+			ptmx, err := pty.Start(childCmd)
+			if err != nil {
+				app.Logger.Error("Failed to start command '%s': %v", args[0], err)
+				if uiServer != nil {
+					uiServer.Stop()
+				}
+				return fmt.Errorf("failed to start command: %w", err)
+			}
+			defer ptmx.Close()
+
+			// Handle terminal resize
+			ch := make(chan os.Signal, 1)
+			signal.Notify(ch, syscall.SIGWINCH)
+			go func() {
+				for range ch {
+					if ws, err := pty.GetsizeFull(os.Stdin); err == nil {
+						pty.Setsize(ptmx, ws)
+					}
+				}
+			}()
+			ch <- syscall.SIGWINCH // Initial resize
+
+			// Handle Ctrl+C - forward to child process
 			sigChan := make(chan os.Signal, 1)
 			signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
 			go func() {
-				sig := <-sigChan
-				if childCmd.Process != nil {
-					childCmd.Process.Signal(sig)
+				for sig := range sigChan {
+					if childCmd.Process != nil {
+						childCmd.Process.Signal(sig)
+					}
 				}
 			}()
 
@@ -95,7 +119,50 @@ When the command exits, BAR records a step with the diff of all changes.`,
 			app.Logger.Info("Changes will be recorded when the command exits")
 			app.Logger.Info("")
 
-			runErr := childCmd.Run()
+			// Start live diff watcher if UI is enabled
+			stopWatcher := make(chan struct{})
+			if uiServer != nil {
+				go func() {
+					ticker := time.NewTicker(2 * time.Second)
+					defer ticker.Stop()
+
+					var lastPatchLen int
+					for {
+						select {
+						case <-stopWatcher:
+							return
+						case <-ticker.C:
+							diffResult, err := app.DiffEngine.Generate(task.WorkspacePath, task.BaseRef)
+							if err != nil {
+								continue
+							}
+
+							// Use patch length as simple change detector
+							currentLen := len(diffResult.Patch)
+							if currentLen != lastPatchLen {
+								lastPatchLen = currentLen
+								uiServer.BroadcastLiveDiff(task.ID, diffResult)
+							}
+						}
+					}
+				}()
+			}
+
+			// Set stdin to raw mode for proper PTY interaction
+			oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+			if err == nil {
+				defer term.Restore(int(os.Stdin.Fd()), oldState)
+			}
+
+			// Copy stdin to PTY and PTY to stdout
+			go func() { io.Copy(ptmx, os.Stdin) }()
+			io.Copy(os.Stdout, ptmx)
+
+			// Stop the watcher
+			close(stopWatcher)
+
+			// Wait for command to finish
+			runErr := childCmd.Wait()
 
 			endTime := time.Now().UTC()
 			duration := endTime.Sub(startTime)
@@ -165,7 +232,6 @@ When the command exits, BAR records a step with the diff of all changes.`,
 			app.Logger.Info("Step %s recorded", stepID)
 			app.Logger.Info("Files changed: %d (+%d, -%d)", diffResult.Files, diffResult.Additions, diffResult.Deletions)
 
-			// Stop UI server if running
 			if uiServer != nil {
 				uiServer.Stop()
 			}

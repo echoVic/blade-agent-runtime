@@ -2,11 +2,11 @@ package web
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"path/filepath"
 	"time"
 
+	"github.com/user/blade-agent-runtime/internal/core/diff"
 	"github.com/user/blade-agent-runtime/internal/core/ledger"
 	"github.com/user/blade-agent-runtime/internal/core/task"
 )
@@ -44,7 +44,6 @@ func (s *Server) Start() error {
 
 	go s.wsHub.Run()
 
-	log.Printf("Web UI server starting on http://localhost%s", s.addr)
 	return s.httpServer.ListenAndServe()
 }
 
@@ -82,4 +81,15 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 
 func (s *Server) Broadcast(msgType string, data interface{}) {
 	s.wsHub.Broadcast(msgType, data)
+}
+
+func (s *Server) BroadcastLiveDiff(taskID string, result *diff.Result) {
+	s.wsHub.Broadcast("live_diff", map[string]interface{}{
+		"task_id":   taskID,
+		"files":     result.Files,
+		"additions": result.Additions,
+		"deletions": result.Deletions,
+		"file_list": result.FileList,
+		"patch":     string(result.Patch),
+	})
 }

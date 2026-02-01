@@ -2,7 +2,6 @@ package web
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"sync"
 
@@ -50,7 +49,6 @@ func (h *WebSocketHub) Run() {
 			h.mu.Lock()
 			h.clients[client] = true
 			h.mu.Unlock()
-			log.Println("WebSocket client connected")
 
 		case client := <-h.unregister:
 			h.mu.Lock()
@@ -59,7 +57,6 @@ func (h *WebSocketHub) Run() {
 				close(client.send)
 			}
 			h.mu.Unlock()
-			log.Println("WebSocket client disconnected")
 
 		case message := <-h.broadcast:
 			h.mu.RLock()
@@ -79,7 +76,6 @@ func (h *WebSocketHub) Run() {
 func (h *WebSocketHub) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("WebSocket upgrade error: %v", err)
 		return
 	}
 
@@ -102,7 +98,6 @@ func (h *WebSocketHub) Broadcast(msgType string, data interface{}) {
 	}
 	jsonData, err := json.Marshal(msg)
 	if err != nil {
-		log.Printf("Broadcast marshal error: %v", err)
 		return
 	}
 	h.broadcast <- jsonData
@@ -118,9 +113,6 @@ func (c *Client) readPump() {
 	for {
 		_, _, err := c.conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("WebSocket error: %v", err)
-			}
 			break
 		}
 	}
