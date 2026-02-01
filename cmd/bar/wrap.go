@@ -21,6 +21,7 @@ import (
 func wrapCmd() *cobra.Command {
 	var noUI bool
 	var uiPort int
+	var uiServer *web.Server
 
 	cmd := &cobra.Command{
 		Use:   "wrap -- <command> [args...]",
@@ -45,13 +46,12 @@ When the command exits, BAR records a step with the diff of all changes.`,
 			// Start UI by default (unless --no-ui is set)
 			if !noUI {
 				addr := fmt.Sprintf(":%d", uiPort)
-				server := web.NewServer(addr, app.TaskManager, app.BarDir)
+				uiServer = web.NewServer(addr, app.TaskManager, app.BarDir)
 				go func() {
-					if err := server.Start(); err != nil {
+					if err := uiServer.Start(); err != nil {
 						app.Logger.Error("Web UI failed: %v", err)
 					}
 				}()
-				defer server.Stop()
 
 				// Wait a bit for server to start
 				time.Sleep(500 * time.Millisecond)
@@ -164,6 +164,19 @@ When the command exits, BAR records a step with the diff of all changes.`,
 
 			app.Logger.Info("Step %s recorded", stepID)
 			app.Logger.Info("Files changed: %d (+%d, -%d)", diffResult.Files, diffResult.Additions, diffResult.Deletions)
+
+			// If UI is running, wait for user to close it
+			if uiServer != nil {
+				app.Logger.Info("")
+				app.Logger.Info("Web UI still running. Press Ctrl+C to exit.")
+
+				waitChan := make(chan os.Signal, 1)
+				signal.Notify(waitChan, syscall.SIGINT, syscall.SIGTERM)
+				<-waitChan
+
+				uiServer.Stop()
+				app.Logger.Info("Web UI stopped.")
+			}
 
 			return nil
 		},
