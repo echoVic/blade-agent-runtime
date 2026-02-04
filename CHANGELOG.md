@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.22] - 2026-02-04
+
+### Added
+- 添加状态信息框组件并替换日志输出方式
+- 添加交互式引导系统和危险操作确认
+- 为命令添加 shell 自动补全功能
+- 实现统一的错误处理框架
+
+### Fixed
+- 修正更新完成后的版本验证命令
+
+
+
 ## [Unreleased]
 
 ### Added
