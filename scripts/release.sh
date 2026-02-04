@@ -78,7 +78,7 @@ generate_changelog_content() {
         range="HEAD"
     fi
     
-    local added="" changed="" fixed="" removed=""
+    local added="" changed="" fixed="" docs="" chore=""
     
     while IFS= read -r line; do
         local type=$(echo "$line" | sed -n 's/^\([a-z]*\)[(:].*$/\1/p')
@@ -91,11 +91,17 @@ generate_changelog_content() {
             fix)
                 fixed="$fixed\n- $msg"
                 ;;
+            docs)
+                docs="$docs\n- $msg"
+                ;;
+            chore)
+                chore="$chore\n- $msg"
+                ;;
             refactor|perf|style)
                 changed="$changed\n- $msg"
                 ;;
             *)
-                if [[ ! "$line" =~ ^(chore|docs|test|ci|build)(\(|:) ]]; then
+                if [[ ! "$line" =~ ^(test|ci|build)(\(|:) ]]; then
                     changed="$changed\n- $line"
                 fi
                 ;;
@@ -112,8 +118,11 @@ generate_changelog_content() {
     if [ -n "$fixed" ]; then
         content="$content\n### Fixed$fixed\n"
     fi
-    if [ -n "$removed" ]; then
-        content="$content\n### Removed$removed\n"
+    if [ -n "$docs" ]; then
+        content="$content\n### Documentation$docs\n"
+    fi
+    if [ -n "$chore" ]; then
+        content="$content\n### Chore$chore\n"
     fi
     
     echo -e "$content"
@@ -138,33 +147,12 @@ update_changelog() {
     fi
     
     local temp_file=$(mktemp)
-    local header_done=0
-    
-    while IFS= read -r line; do
-        echo "$line" >> "$temp_file"
-        if [[ "$line" == "## [Unreleased]" ]]; then
-            echo "" >> "$temp_file"
-            echo "## [$version] - $date" >> "$temp_file"
-            echo -e "$changelog_content" >> "$temp_file"
-            header_done=1
-        fi
-    done < "$CHANGELOG_FILE"
-    
-    if [ "$header_done" -eq 0 ]; then
-        echo "Warning: No [Unreleased] section found, prepending to file"
-        local new_temp=$(mktemp)
-        head -n 6 "$CHANGELOG_FILE" > "$new_temp"
-        echo "" >> "$new_temp"
-        echo "## [Unreleased]" >> "$new_temp"
-        echo "" >> "$new_temp"
-        echo "## [$version] - $date" >> "$new_temp"
-        echo -e "$changelog_content" >> "$new_temp"
-        tail -n +7 "$CHANGELOG_FILE" >> "$new_temp"
-        mv "$new_temp" "$CHANGELOG_FILE"
-        rm -f "$temp_file"
-    else
-        mv "$temp_file" "$CHANGELOG_FILE"
-    fi
+    head -n 6 "$CHANGELOG_FILE" > "$temp_file"
+    echo "" >> "$temp_file"
+    echo "## [$version] - $date" >> "$temp_file"
+    echo -e "$changelog_content" >> "$temp_file"
+    tail -n +7 "$CHANGELOG_FILE" >> "$temp_file"
+    mv "$temp_file" "$CHANGELOG_FILE"
 }
 
 prepare_release() {
