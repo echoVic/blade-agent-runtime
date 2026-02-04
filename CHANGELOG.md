@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.20] - 2026-02-04
 
 ### Changed
-- Version bump
+- 发布脚本从 bash 改为 Node.js 实现
 
 
 ## [0.0.19] - 2026-02-04
