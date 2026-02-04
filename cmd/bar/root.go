@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 
 	gitadapter "github.com/user/blade-agent-runtime/internal/adapters/git"
 	"github.com/user/blade-agent-runtime/internal/core/apply"
@@ -14,6 +15,7 @@ import (
 	"github.com/user/blade-agent-runtime/internal/core/policy"
 	"github.com/user/blade-agent-runtime/internal/core/task"
 	"github.com/user/blade-agent-runtime/internal/core/workspace"
+	"github.com/user/blade-agent-runtime/internal/guide"
 	barerrors "github.com/user/blade-agent-runtime/internal/util/errors"
 	utillog "github.com/user/blade-agent-runtime/internal/util/log"
 	utilpath "github.com/user/blade-agent-runtime/internal/util/path"
@@ -37,6 +39,13 @@ type App struct {
 var rootCmd = &cobra.Command{
 	Use:   "bar",
 	Short: "Blade Agent Runtime",
+	Run: func(cmd *cobra.Command, args []string) {
+		if isInteractive() {
+			showQuickStart()
+		} else {
+			_ = cmd.Help()
+		}
+	},
 }
 
 func Execute() error {
@@ -118,6 +127,38 @@ func requireActiveTask(app *App) (*task.Task, error) {
 		return nil, err
 	}
 	return t, nil
+}
+
+func isInteractive() bool {
+	return term.IsTerminal(int(os.Stdin.Fd()))
+}
+
+func newGuide() *guide.Guide {
+	return guide.New(os.Stdin, os.Stdout)
+}
+
+func showQuickStart() {
+	g := newGuide()
+	g.Print("")
+	g.Print("🚀 BAR - Blade Agent Runtime")
+	g.Print("")
+	g.Print("Quick Start:")
+	g.Print("  bar task start <name>    Create a new task and start working")
+	g.Print("  bar run -- <command>     Run a command in the isolated workspace")
+	g.Print("  bar diff                 View changes made by the agent")
+	g.Print("  bar apply                Apply changes to the main branch")
+	g.Print("")
+	g.Print("Common Commands:")
+	g.Print("  bar status               Show current status")
+	g.Print("  bar log                  View operation history")
+	g.Print("  bar task list            List all tasks")
+	g.Print("  bar rollback --base      Reset to initial state")
+	g.Print("")
+	g.Print("Get Started:")
+	g.Print("  bar task start fix-bug   Create your first task")
+	g.Print("")
+	g.Print("For more information: bar --help")
+	g.Print("")
 }
 
 

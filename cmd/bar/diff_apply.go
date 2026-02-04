@@ -220,11 +220,26 @@ func rollbackCmd() *cobra.Command {
 			stepID, _ := cmd.Flags().GetString("step")
 			base, _ := cmd.Flags().GetBool("base")
 			hard, _ := cmd.Flags().GetBool("hard")
+			force, _ := cmd.Flags().GetBool("force")
 			if stepID != "" && !base {
 				return barerrors.RollbackNotSupported()
 			}
 			if !base {
 				return barerrors.RollbackRequiresBase()
+			}
+			if hard && !force && isInteractive() {
+				g := newGuide()
+				g.Print("")
+				g.Print("⚠️  Warning: --hard will discard ALL uncommitted changes!")
+				g.Print("")
+				confirmed, err := g.Prompt().Confirm("Are you sure you want to continue?")
+				if err != nil {
+					return err
+				}
+				if !confirmed {
+					app.Logger.Info("Rollback cancelled")
+					return nil
+				}
 			}
 			if err := app.WorkspaceManager.Reset(task.WorkspacePath, task.BaseRef, hard); err != nil {
 				return err
@@ -256,6 +271,7 @@ func rollbackCmd() *cobra.Command {
 	cmd.Flags().String("step", "", "rollback to a specific step")
 	cmd.Flags().Bool("base", false, "rollback to base state")
 	cmd.Flags().Bool("hard", false, "discard uncommitted changes")
+	cmd.Flags().BoolP("force", "f", false, "skip confirmation for dangerous operations")
 	_ = cmd.RegisterFlagCompletionFunc("step", stepCompletionFunc)
 	return cmd
 }

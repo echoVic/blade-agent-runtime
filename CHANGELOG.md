@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Shell 自动补全支持 (Bash, Zsh, Fish, PowerShell)
+  - 任务名补全：`bar task switch <TAB>`, `bar task close <TAB>`
+  - Step ID 补全：`bar log --step <TAB>`, `bar diff --step <TAB>`, `bar rollback --step <TAB>`
+- 友好的错误提示系统
+  - 统一的错误格式：❌ 错误描述 + 💡 解决建议
+  - 支持 `errors.Is` 和 `errors.As` 标准库兼容
+- 交互式引导
+  - 首次运行 `bar` 显示快速入门指南
+  - `bar rollback --hard` 危险操作前确认
+  - 创建任务时已有活动任务提示是否切换
+- `internal/completion` 模块：补全逻辑抽象
+- `internal/util/errors` 模块：统一错误处理
+- `internal/guide` 模块：交互式引导
+
+### Changed
+- 所有 CLI 命令使用新的错误提示格式
+
 ## [0.0.21] - 2026-02-04
 
 ### Changed
