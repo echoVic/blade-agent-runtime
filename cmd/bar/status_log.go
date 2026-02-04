@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/user/blade-agent-runtime/internal/core/ledger"
+	barerrors "github.com/user/blade-agent-runtime/internal/util/errors"
 )
 
 func statusCmd() *cobra.Command {
@@ -107,8 +107,8 @@ func logCmd() *cobra.Command {
 					return err
 				}
 				if step == nil {
-					return errors.New("step not found")
-				}
+				return barerrors.StepNotFound(stepID)
+			}
 				return writeLogOutput(format, output, renderStepDetail(step))
 			}
 			if limit > 0 && len(steps) > limit {

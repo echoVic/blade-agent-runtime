@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	barerrors "github.com/user/blade-agent-runtime/internal/util/errors"
 )
 
 const (
@@ -28,7 +30,7 @@ func updateCmd() *cobra.Command {
 
 			latest, err := getLatestVersion()
 			if err != nil {
-				return fmt.Errorf("failed to check latest version: %w", err)
+				return barerrors.WrapWithHint(err, "Failed to check latest version.", "Check your network connection and try again.")
 			}
 
 			fmt.Printf("Current version: v%s\n", currentVersion)
@@ -48,7 +50,7 @@ func updateCmd() *cobra.Command {
 
 			var updateCmd *exec.Cmd
 			if runtime.GOOS == "windows" {
-				return fmt.Errorf("auto-update not supported on Windows, please reinstall manually")
+				return barerrors.UpdateNotSupportedOnWindows()
 			}
 
 			updateCmd = exec.Command("sh", "-c", fmt.Sprintf("curl -fsSL %s | sh", installURL))
@@ -56,7 +58,7 @@ func updateCmd() *cobra.Command {
 			updateCmd.Stderr = os.Stderr
 
 			if err := updateCmd.Run(); err != nil {
-				return fmt.Errorf("update failed: %w", err)
+				return barerrors.UpdateFailed(err)
 			}
 
 			fmt.Println("\nUpdate complete! Run 'bar version' to verify.")

@@ -1,11 +1,10 @@
 package main
 
 import (
-	"errors"
-
 	"github.com/spf13/cobra"
 
 	"github.com/user/blade-agent-runtime/internal/core/task"
+	barerrors "github.com/user/blade-agent-runtime/internal/util/errors"
 )
 
 func taskCmd() *cobra.Command {
@@ -120,8 +119,8 @@ func taskCloseCmd() *cobra.Command {
 					return err
 				}
 				if !clean {
-					return errors.New("workspace not clean, use --force to close")
-				}
+				return barerrors.WorkspaceNotClean()
+			}
 			}
 			if !keep {
 				if err := app.WorkspaceManager.Delete(t.WorkspacePath); err != nil {

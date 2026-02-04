@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"github.com/user/blade-agent-runtime/internal/core/exec"
 	"github.com/user/blade-agent-runtime/internal/core/ledger"
 	"github.com/user/blade-agent-runtime/internal/core/policy"
+	barerrors "github.com/user/blade-agent-runtime/internal/util/errors"
 )
 
 func runCmd() *cobra.Command {
@@ -52,8 +52,14 @@ func runCmd() *cobra.Command {
 					return err
 				}
 				if !res.Allowed {
-					return errors.New("policy violation")
+				rule := ""
+				reason := ""
+				if len(res.Events) > 0 {
+					rule = res.Events[0].Rule
+					reason = res.Events[0].Reason
 				}
+				return barerrors.PolicyViolation(rule, reason)
+			}
 				for _, ev := range res.Events {
 					if ev.Action == "warn" {
 						app.Logger.Info("Policy warning: %s", ev.Reason)

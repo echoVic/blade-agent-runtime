@@ -22,7 +22,7 @@ func initCmd() *cobra.Command {
 			}
 			force, _ := cmd.Flags().GetBool("force")
 			if _, err := os.Stat(app.BarDir); err == nil && !force {
-				return fail(errAlreadyInitialized)
+				return errAlreadyInitialized
 			}
 			if err := utilpath.EnsureDir(app.BarDir); err != nil {
 				return err

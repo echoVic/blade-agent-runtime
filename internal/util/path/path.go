@@ -2,10 +2,11 @@ package path
 
 import (
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+
+	barerrors "github.com/user/blade-agent-runtime/internal/util/errors"
 )
 
 func FindRepoRoot(start string) (string, error) {
@@ -19,7 +20,7 @@ func FindRepoRoot(start string) (string, error) {
 		}
 		parent := filepath.Dir(current)
 		if parent == current {
-			return "", errors.New("not a git repository")
+			return "", barerrors.NotGitRepo()
 		}
 		current = parent
 	}

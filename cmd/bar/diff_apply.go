@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 	"path/filepath"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/user/blade-agent-runtime/internal/core/ledger"
+	barerrors "github.com/user/blade-agent-runtime/internal/util/errors"
 )
 
 func diffCmd() *cobra.Command {
@@ -37,8 +37,8 @@ func diffCmd() *cobra.Command {
 					return err
 				}
 				if step == nil {
-					return errors.New("step not found")
-				}
+				return barerrors.StepNotFound(stepID)
+			}
 				if statOnly || format == "stat" {
 					if step.DiffStat != nil {
 						app.Logger.Info("%d files changed, %d insertions(+), %d deletions(-)", step.DiffStat.Files, step.DiffStat.Additions, step.DiffStat.Deletions)
@@ -62,7 +62,7 @@ func diffCmd() *cobra.Command {
 					app.Logger.Info("%s", string(data))
 					return nil
 				}
-				return errors.New("patch not found")
+				return barerrors.PatchNotFound(stepID)
 			}
 			result, err := app.DiffEngine.Generate(task.WorkspacePath, task.BaseRef)
 			if err != nil {
@@ -206,10 +206,10 @@ func rollbackCmd() *cobra.Command {
 			base, _ := cmd.Flags().GetBool("base")
 			hard, _ := cmd.Flags().GetBool("hard")
 			if stepID != "" && !base {
-				return errors.New("step rollback not supported in v0")
+				return barerrors.RollbackNotSupported()
 			}
 			if !base {
-				return errors.New("use --base to rollback")
+				return barerrors.RollbackRequiresBase()
 			}
 			if err := app.WorkspaceManager.Reset(task.WorkspacePath, task.BaseRef, hard); err != nil {
 				return err

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -16,6 +14,7 @@ import (
 	"github.com/user/blade-agent-runtime/internal/core/policy"
 	"github.com/user/blade-agent-runtime/internal/core/task"
 	"github.com/user/blade-agent-runtime/internal/core/workspace"
+	barerrors "github.com/user/blade-agent-runtime/internal/util/errors"
 	utillog "github.com/user/blade-agent-runtime/internal/util/log"
 	utilpath "github.com/user/blade-agent-runtime/internal/util/path"
 )
@@ -71,7 +70,7 @@ func initApp(requireBar bool) (*App, error) {
 	barDir := utilpath.BarDir(repoRoot)
 	if requireBar {
 		if _, err := os.Stat(barDir); err != nil {
-			return nil, errors.New("bar not initialized")
+			return nil, barerrors.NotInitialized()
 		}
 	}
 	cfgPath, _ := rootCmd.Flags().GetString("config")
@@ -121,9 +120,4 @@ func requireActiveTask(app *App) (*task.Task, error) {
 	return t, nil
 }
 
-func fail(err error) error {
-	if err == nil {
-		return nil
-	}
-	return fmt.Errorf("%w", err)
-}
+

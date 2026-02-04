@@ -1,12 +1,11 @@
 package task
 
 import (
-	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
+	barerrors "github.com/user/blade-agent-runtime/internal/util/errors"
 	utiljson "github.com/user/blade-agent-runtime/internal/util/json"
 )
 
@@ -115,7 +114,7 @@ func (m *Manager) GetActive() (*Task, error) {
 		return nil, err
 	}
 	if state.ActiveTaskID == "" {
-		return nil, errors.New("no active task")
+		return nil, barerrors.NoActiveTask()
 	}
 	return m.Get(state.ActiveTaskID)
 }
@@ -150,5 +149,5 @@ func (m *Manager) ResolveByName(name string) (*Task, error) {
 			return t, nil
 		}
 	}
-	return nil, fmt.Errorf("task not found: %s", name)
+	return nil, barerrors.TaskNotFound(name)
 }
