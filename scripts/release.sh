@@ -1,50 +1,201 @@
 #!/bin/bash
 set -e
 
-if [ -z "$1" ]; then
-    echo "Usage: ./scripts/release.sh <version>"
-    echo "Example: ./scripts/release.sh 0.0.6"
-    exit 1
-fi
+CHANGELOG_FILE="CHANGELOG.md"
+VERSION_FILE="cmd/bar/update.go"
 
-VERSION="$1"
-TAG="v$VERSION"
+check_clean_working_tree() {
+    if ! git diff --quiet HEAD; then
+        echo "Error: Working tree has uncommitted changes"
+        echo "Please commit or stash your changes before releasing"
+        git status --short
+        exit 1
+    fi
+}
 
-echo "==> Updating version to $VERSION"
-sed -i '' "s/currentVersion = \".*\"/currentVersion = \"$VERSION\"/" cmd/bar/update.go
+show_help() {
+    echo "Usage: ./scripts/release.sh <command> [options]"
+    echo ""
+    echo "Commands:"
+    echo "  patch                Bump patch version (0.0.1 -> 0.0.2)"
+    echo "  minor                Bump minor version (0.0.1 -> 0.1.0)"
+    echo "  major                Bump major version (0.0.1 -> 1.0.0)"
+    echo "  prepare <version>    Prepare release with specific version"
+    echo "  publish              Build and publish the release"
+    echo "  full <version>       Do both prepare and publish"
+    echo ""
+    echo "Examples:"
+    echo "  ./scripts/release.sh patch"
+    echo "  ./scripts/release.sh minor"
+    echo "  ./scripts/release.sh major"
+    echo "  ./scripts/release.sh prepare 0.0.15"
+    echo "  ./scripts/release.sh publish"
+    echo "  ./scripts/release.sh full 0.0.15"
+}
 
-echo "==> Building binaries..."
-mkdir -p dist
+get_current_version() {
+    grep 'currentVersion = ' "$VERSION_FILE" | sed 's/.*"\(.*\)".*/\1/'
+}
 
-for OS in darwin linux; do
-    for ARCH in amd64 arm64; do
-        echo "    Building $OS/$ARCH..."
-        GOOS=$OS GOARCH=$ARCH go build -o dist/bar ./cmd/bar
-        tar -czf "dist/bar_${OS}_${ARCH}.tar.gz" -C dist bar
-        rm dist/bar
+bump_version() {
+    local current="$1"
+    local type="$2"
+    
+    local major minor patch
+    IFS='.' read -r major minor patch <<< "$current"
+    
+    case "$type" in
+        major)
+            major=$((major + 1))
+            minor=0
+            patch=0
+            ;;
+        minor)
+            minor=$((minor + 1))
+            patch=0
+            ;;
+        patch)
+            patch=$((patch + 1))
+            ;;
+    esac
+    
+    echo "$major.$minor.$patch"
+}
+
+update_version() {
+    local version="$1"
+    echo "==> Updating version to $version"
+    sed -i '' "s/currentVersion = \".*\"/currentVersion = \"$version\"/" "$VERSION_FILE"
+}
+
+update_changelog() {
+    local version="$1"
+    local date=$(date +%Y-%m-%d)
+    
+    if grep -q "## \[$version\]" "$CHANGELOG_FILE"; then
+        echo "==> Version $version already exists in CHANGELOG"
+        return 0
+    fi
+    
+    echo "==> Updating CHANGELOG for $version"
+    
+    local temp_file=$(mktemp)
+    local in_unreleased=0
+    local unreleased_content=""
+    
+    while IFS= read -r line; do
+        if [[ "$line" == "## [Unreleased]" ]]; then
+            in_unreleased=1
+            echo "$line" >> "$temp_file"
+            echo "" >> "$temp_file"
+            echo "## [$version] - $date" >> "$temp_file"
+        elif [[ "$line" =~ ^##\ \[.*\] && "$in_unreleased" -eq 1 ]]; then
+            in_unreleased=0
+            echo "$line" >> "$temp_file"
+        else
+            echo "$line" >> "$temp_file"
+        fi
+    done < "$CHANGELOG_FILE"
+    
+    mv "$temp_file" "$CHANGELOG_FILE"
+}
+
+prepare_release() {
+    local version="$1"
+    
+    if [ -z "$version" ]; then
+        echo "Error: Version required"
+        echo "Usage: ./scripts/release.sh prepare <version>"
+        exit 1
+    fi
+    
+    check_clean_working_tree
+    
+    local current=$(get_current_version)
+    echo "Current version: $current"
+    echo "New version: $version"
+    echo ""
+    
+    update_version "$version"
+    update_changelog "$version"
+    
+    echo ""
+    echo "==> Committing changes..."
+    git add "$VERSION_FILE" "$CHANGELOG_FILE"
+    git commit -m "chore: release v$version"
+    
+    echo ""
+    echo "✓ Release $version prepared"
+    echo "  Run './scripts/release.sh publish' to build and publish"
+}
+
+publish_release() {
+    check_clean_working_tree
+    
+    local version=$(get_current_version)
+    local tag="v$version"
+    
+    echo "==> Publishing version $version"
+    
+    echo "==> Building binaries..."
+    mkdir -p dist
+    
+    for OS in darwin linux; do
+        for ARCH in amd64 arm64; do
+            echo "    Building $OS/$ARCH..."
+            GOOS=$OS GOARCH=$ARCH go build -o dist/bar ./cmd/bar
+            tar -czf "dist/bar_${OS}_${ARCH}.tar.gz" -C dist bar
+            rm dist/bar
+        done
     done
-done
+    
+    echo "==> Creating tag $tag..."
+    git tag "$tag"
+    
+    echo "==> Pushing to origin..."
+    git push
+    git push origin "$tag"
+    
+    echo "==> Creating GitHub release..."
+    gh release create "$tag" \
+        dist/bar_darwin_amd64.tar.gz \
+        dist/bar_darwin_arm64.tar.gz \
+        dist/bar_linux_amd64.tar.gz \
+        dist/bar_linux_arm64.tar.gz \
+        --title "$tag" \
+        --generate-notes
+    
+    echo ""
+    echo "✓ Released $tag"
+    echo "  https://github.com/echoVic/blade-agent-runtime/releases/tag/$tag"
+}
 
-echo "==> Committing version bump..."
-git add -f cmd/bar/update.go
-git commit -m "chore: bump version to $VERSION" || true
+full_release() {
+    local version="$1"
+    prepare_release "$version"
+    publish_release
+}
 
-echo "==> Creating tag $TAG..."
-git tag "$TAG"
-
-echo "==> Pushing to origin..."
-git push
-git push origin "$TAG"
-
-echo "==> Creating GitHub release..."
-gh release create "$TAG" \
-    dist/bar_darwin_amd64.tar.gz \
-    dist/bar_darwin_arm64.tar.gz \
-    dist/bar_linux_amd64.tar.gz \
-    dist/bar_linux_arm64.tar.gz \
-    --title "$TAG" \
-    --generate-notes
-
-echo ""
-echo "✓ Released $TAG"
-echo "  https://github.com/echoVic/blade-agent-runtime/releases/tag/$TAG"
+case "${1:-}" in
+    patch|minor|major)
+        current=$(get_current_version)
+        new_version=$(bump_version "$current" "$1")
+        prepare_release "$new_version"
+        ;;
+    prepare)
+        prepare_release "$2"
+        ;;
+    publish)
+        publish_release
+        ;;
+    full)
+        full_release "$2"
+        ;;
+    -h|--help|help)
+        show_help
+        ;;
+    *)
+        show_help
+        exit 1
+        ;;
+esac

@@ -1,7 +1,9 @@
 package path
 
 import (
+	"crypto/sha256"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -23,8 +25,19 @@ func FindRepoRoot(start string) (string, error) {
 	}
 }
 
+func GlobalBarDir() string {
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".bar")
+}
+
+func ProjectID(repoRoot string) string {
+	name := filepath.Base(repoRoot)
+	hash := sha256.Sum256([]byte(repoRoot))
+	return fmt.Sprintf("%s-%x", name, hash[:2])
+}
+
 func BarDir(repoRoot string) string {
-	return filepath.Join(repoRoot, ".bar")
+	return filepath.Join(GlobalBarDir(), "projects", ProjectID(repoRoot))
 }
 
 func EnsureDir(path string) error {

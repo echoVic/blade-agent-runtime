@@ -3,13 +3,11 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/user/blade-agent-runtime/internal/core/config"
 	"github.com/user/blade-agent-runtime/internal/core/task"
-	utillog "github.com/user/blade-agent-runtime/internal/util/log"
 	utilpath "github.com/user/blade-agent-runtime/internal/util/path"
 )
 
@@ -45,7 +43,6 @@ func initCmd() *cobra.Command {
 				return err
 			}
 			app.Logger.Info("Initialized BAR in %s", app.BarDir)
-			checkGitignore(app.RepoRoot, app.Logger)
 			return nil
 		},
 	}
@@ -104,7 +101,6 @@ func initAppWithAutoInit() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	checkGitignore(repoRoot, app.Logger)
 	return app, nil
 }
 
@@ -131,20 +127,5 @@ func ensureBarInit(app *App) error {
 		return err
 	}
 	app.Logger.Info("Initialized BAR in %s", app.BarDir)
-	checkGitignore(app.RepoRoot, app.Logger)
 	return nil
-}
-
-func checkGitignore(repoRoot string, logger *utillog.Logger) {
-	path := filepath.Join(repoRoot, ".gitignore")
-	data, err := os.ReadFile(path)
-	if err != nil {
-		logger.Info("Tip: Add '.bar/' to your .gitignore")
-		return
-	}
-
-	content := string(data)
-	if !strings.Contains(content, ".bar/") && !strings.Contains(content, ".bar") {
-		logger.Info("Tip: Add '.bar/' to your .gitignore")
-	}
 }
