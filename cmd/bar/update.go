@@ -59,7 +59,7 @@ func updateCmd() *cobra.Command {
 				return fmt.Errorf("update failed: %w", err)
 			}
 
-			fmt.Println("\nUpdate complete! Run 'bar --version' to verify.")
+			fmt.Println("\nUpdate complete! Run 'bar version' to verify.")
 			return nil
 		},
 	}
