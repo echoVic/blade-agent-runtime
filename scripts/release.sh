@@ -81,31 +81,28 @@ generate_changelog_content() {
     local added="" changed="" fixed="" docs="" chore=""
     
     while IFS= read -r line; do
-        local type=$(echo "$line" | sed -n 's/^\([a-z]*\)[(:].*$/\1/p')
-        local msg=$(echo "$line" | sed 's/^[a-z]*\(([^)]*)\)\?: //')
-        
-        case "$type" in
-            feat)
-                added="$added\n- $msg"
-                ;;
-            fix)
-                fixed="$fixed\n- $msg"
-                ;;
-            docs)
-                docs="$docs\n- $msg"
-                ;;
-            chore)
-                chore="$chore\n- $msg"
-                ;;
-            refactor|perf|style)
-                changed="$changed\n- $msg"
-                ;;
-            *)
-                if [[ ! "$line" =~ ^(test|ci|build)(\(|:) ]]; then
-                    changed="$changed\n- $line"
-                fi
-                ;;
-        esac
+        if [[ "$line" =~ ^([a-z]+) ]]; then
+            local type="${BASH_REMATCH[1]}"
+            local msg="${line#*: }"
+            
+            case "$type" in
+                feat)
+                    added="$added\n- $msg"
+                    ;;
+                fix)
+                    fixed="$fixed\n- $msg"
+                    ;;
+                docs)
+                    docs="$docs\n- $msg"
+                    ;;
+                chore)
+                    chore="$chore\n- $msg"
+                    ;;
+                refactor|perf|style)
+                    changed="$changed\n- $msg"
+                    ;;
+            esac
+        fi
     done < <(git log --pretty=format:"%s" $range 2>/dev/null)
     
     local content=""
