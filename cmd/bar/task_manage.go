@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/user/blade-agent-runtime/internal/completion"
 	"github.com/user/blade-agent-runtime/internal/core/task"
 	barerrors "github.com/user/blade-agent-runtime/internal/util/errors"
 )
@@ -60,6 +61,17 @@ func taskSwitchCmd() *cobra.Command {
 		Use:   "switch <task_id|name>",
 		Short: "Switch active task",
 		Args:  cobra.ExactArgs(1),
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			if len(args) != 0 {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+			app, err := initApp(true)
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+			completions := completion.GetTaskCompletions(app.BarDir, false)
+			return completion.ToCobraCompletions(completions), cobra.ShellCompDirectiveNoFileComp
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			app, err := initApp(true)
 			if err != nil {
@@ -88,6 +100,17 @@ func taskCloseCmd() *cobra.Command {
 		Use:   "close [task_id]",
 		Short: "Close a task",
 		Args:  cobra.RangeArgs(0, 1),
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			if len(args) != 0 {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+			app, err := initApp(true)
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+			completions := completion.GetTaskCompletions(app.BarDir, false)
+			return completion.ToCobraCompletions(completions), cobra.ShellCompDirectiveNoFileComp
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			app, err := initApp(true)
 			if err != nil {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/user/blade-agent-runtime/internal/completion"
 	"github.com/user/blade-agent-runtime/internal/core/ledger"
 	barerrors "github.com/user/blade-agent-runtime/internal/util/errors"
 )
@@ -37,8 +38,8 @@ func diffCmd() *cobra.Command {
 					return err
 				}
 				if step == nil {
-				return barerrors.StepNotFound(stepID)
-			}
+					return barerrors.StepNotFound(stepID)
+				}
 				if statOnly || format == "stat" {
 					if step.DiffStat != nil {
 						app.Logger.Info("%d files changed, %d insertions(+), %d deletions(-)", step.DiffStat.Files, step.DiffStat.Additions, step.DiffStat.Deletions)
@@ -92,7 +93,21 @@ func diffCmd() *cobra.Command {
 	cmd.Flags().Bool("stat", false, "show stat only")
 	cmd.Flags().String("output", "", "write diff to file")
 	cmd.Flags().String("format", "patch", "output format: patch, stat, json")
+	_ = cmd.RegisterFlagCompletionFunc("step", stepCompletionFunc)
 	return cmd
+}
+
+func stepCompletionFunc(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	app, err := initApp(true)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	task, err := requireActiveTask(app)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	completions := completion.GetStepCompletions(app.BarDir, task.ID)
+	return completion.ToCobraCompletions(completions), cobra.ShellCompDirectiveNoFileComp
 }
 
 func outputDiffJSON(app *App, stat *ledger.DiffStat, patch []byte, output string) error {
@@ -241,5 +256,6 @@ func rollbackCmd() *cobra.Command {
 	cmd.Flags().String("step", "", "rollback to a specific step")
 	cmd.Flags().Bool("base", false, "rollback to base state")
 	cmd.Flags().Bool("hard", false, "discard uncommitted changes")
+	_ = cmd.RegisterFlagCompletionFunc("step", stepCompletionFunc)
 	return cmd
 }

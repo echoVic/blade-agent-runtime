@@ -462,3 +462,78 @@ bar log --format markdown --output report.md
 | `BAR_CONFIG` | 配置文件路径 | ~/.bar/projects/<project>/config.yaml |
 | `BAR_VERBOSE` | 详细输出 | false |
 | `BAR_NO_COLOR` | 禁用颜色输出 | false |
+
+---
+
+## Shell 自动补全
+
+BAR 支持 Bash、Zsh、Fish 和 PowerShell 的自动补全功能。
+
+### 启用补全
+
+**Zsh** (添加到 `~/.zshrc`)：
+```bash
+source <(bar completion zsh)
+```
+
+**Bash** (添加到 `~/.bashrc`)：
+```bash
+source <(bar completion bash)
+```
+
+**Fish**：
+```fish
+bar completion fish | source
+```
+
+**PowerShell**：
+```powershell
+bar completion powershell | Out-String | Invoke-Expression
+```
+
+### 支持的补全
+
+| 命令 | 补全内容 |
+|------|----------|
+| `bar task switch <TAB>` | 任务 ID 和名称 |
+| `bar task close <TAB>` | 任务 ID 和名称 |
+| `bar log --step <TAB>` | Step ID |
+| `bar diff --step <TAB>` | Step ID |
+| `bar rollback --step <TAB>` | Step ID |
+
+**示例:**
+```bash
+$ bar task switch <TAB>
+abc123  -- fix-bug (active)
+def456  -- add-feature (active)
+fix-bug -- ID: abc123
+
+$ bar log --step <TAB>
+0001  -- run: echo hello
+0002  -- run: npm test
+0003  -- apply
+```
+
+---
+
+## 错误提示
+
+BAR 提供友好的错误提示，包含问题描述和解决建议：
+
+```
+❌ BAR is not initialized in this repository.
+
+💡 Run 'bar init' or 'bar task start <name>' to get started.
+```
+
+### 常见错误
+
+| 错误 | 说明 | 解决方法 |
+|------|------|----------|
+| `BAR is not initialized` | 当前仓库未初始化 BAR | 运行 `bar init` |
+| `No active task` | 没有活动任务 | 运行 `bar task start <name>` |
+| `Task not found` | 指定的任务不存在 | 运行 `bar task list` 查看 |
+| `Step not found` | 指定的 Step 不存在 | 运行 `bar log` 查看 |
+| `Workspace has uncommitted changes` | 工作区有未提交更改 | 使用 `--force` 或先提交 |
+| `Command blocked by policy` | 命令被策略拦截 | 检查 policy 配置 |
+| `Not a git repository` | 当前目录不是 Git 仓库 | 运行 `git init` |

@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/user/blade-agent-runtime/internal/completion"
 	"github.com/user/blade-agent-runtime/internal/core/ledger"
 	barerrors "github.com/user/blade-agent-runtime/internal/util/errors"
 )
@@ -128,6 +129,18 @@ func logCmd() *cobra.Command {
 	cmd.Flags().Int("limit", 10, "limit number of steps")
 	cmd.Flags().String("format", "table", "output format (table/json/markdown)")
 	cmd.Flags().String("output", "", "write output to file")
+	_ = cmd.RegisterFlagCompletionFunc("step", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		app, err := initApp(true)
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		task, err := requireActiveTask(app)
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		completions := completion.GetStepCompletions(app.BarDir, task.ID)
+		return completion.ToCobraCompletions(completions), cobra.ShellCompDirectiveNoFileComp
+	})
 	return cmd
 }
 func statusString(clean bool) string {
