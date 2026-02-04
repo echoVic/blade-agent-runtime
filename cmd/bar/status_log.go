@@ -12,6 +12,7 @@ import (
 
 	"github.com/user/blade-agent-runtime/internal/completion"
 	"github.com/user/blade-agent-runtime/internal/core/ledger"
+	"github.com/user/blade-agent-runtime/internal/ui"
 	barerrors "github.com/user/blade-agent-runtime/internal/util/errors"
 )
 
@@ -62,17 +63,18 @@ func statusCmd() *cobra.Command {
 				fmt.Fprintln(os.Stdout, string(data))
 				return nil
 			}
-			app.Logger.Info("BAR Status")
-			app.Logger.Info("Repository:  %s", app.RepoRoot)
-			app.Logger.Info("Active Task: %s (%s)", task.Name, task.ID)
-			app.Logger.Info("Workspace:   %s", task.WorkspacePath)
-			app.Logger.Info("Branch:      %s", task.Branch)
-			app.Logger.Info("Base:        %s", task.BaseRef)
-			app.Logger.Info("Status:      %s", statusString(clean))
-			app.Logger.Info("Steps:       %d", len(steps))
+			box := ui.NewBox("🔧 BAR Status")
+			box.AddRow("Repository", app.RepoRoot)
+			box.AddRow("Active Task", fmt.Sprintf("%s (%s)", task.Name, task.ID))
+			box.AddRow("Workspace", task.WorkspacePath)
+			box.AddRow("Branch", task.Branch)
+			box.AddRow("Base", task.BaseRef)
+			box.AddRow("Status", ui.StatusIndicator(clean, 0))
+			box.AddRow("Steps", fmt.Sprintf("%d", len(steps)))
 			if last != nil {
-				app.Logger.Info("Last Step:   %s (%s)", last.StepID, last.Kind)
+				box.AddRow("Last Step", fmt.Sprintf("%s (%s)", last.StepID, last.Kind))
 			}
+			fmt.Fprintln(os.Stdout, box.Render())
 			return nil
 		},
 	}
@@ -108,8 +110,8 @@ func logCmd() *cobra.Command {
 					return err
 				}
 				if step == nil {
-				return barerrors.StepNotFound(stepID)
-			}
+					return barerrors.StepNotFound(stepID)
+				}
 				return writeLogOutput(format, output, renderStepDetail(step))
 			}
 			if limit > 0 && len(steps) > limit {
