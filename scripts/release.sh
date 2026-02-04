@@ -81,8 +81,8 @@ generate_changelog_content() {
     local added="" changed="" fixed="" removed=""
     
     while IFS= read -r line; do
-        local type=$(echo "$line" | sed -n 's/^\([a-z]*\):.*/\1/p')
-        local msg=$(echo "$line" | sed 's/^[a-z]*: //')
+        local type=$(echo "$line" | sed -n 's/^\([a-z]*\)[(:].*$/\1/p')
+        local msg=$(echo "$line" | sed 's/^[a-z]*\(([^)]*)\)\?: //')
         
         case "$type" in
             feat)
@@ -95,7 +95,7 @@ generate_changelog_content() {
                 changed="$changed\n- $msg"
                 ;;
             *)
-                if [[ "$line" != chore:* && "$line" != docs:* && "$line" != test:* ]]; then
+                if [[ ! "$line" =~ ^(chore|docs|test|ci|build)(\(|:) ]]; then
                     changed="$changed\n- $line"
                 fi
                 ;;

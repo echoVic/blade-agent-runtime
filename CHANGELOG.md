@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.16] - 2026-02-04
 
-### Changed
-- Version bump
+### Added
+- 增强发布脚本：自动从 git commit 生成 CHANGELOG
+- 更新文档：architecture.md、data-model.md、cli.md 路径改为 `~/.bar`
 
 
 ## [0.0.15] - 2026-02-04
