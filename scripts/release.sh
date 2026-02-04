@@ -180,7 +180,7 @@ case "${1:-}" in
     patch|minor|major)
         current=$(get_current_version)
         new_version=$(bump_version "$current" "$1")
-        prepare_release "$new_version"
+        full_release "$new_version"
         ;;
     prepare)
         prepare_release "$2"
