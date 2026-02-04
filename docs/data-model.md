@@ -2,33 +2,35 @@
 
 ## 目录结构
 
+存档目录位于用户主目录 `~/.bar/`，按项目组织：
+
 ```
-your-repo/
-├── .bar/                           # BAR 数据根目录
-│   ├── config.yaml                 # 全局配置
-│   ├── state.json                  # 全局状态（当前 active task）
-│   ├── tasks/                      # 任务数据
-│   │   └── <task_id>/
-│   │       ├── task.json           # 任务元信息
-│   │       ├── ledger.jsonl        # 操作日志（JSONL 格式）
-│   │       └── artifacts/          # 产物文件
-│   │           ├── 0001.patch      # Step 1 的 diff
-│   │           ├── 0001.output     # Step 1 的输出
-│   │           ├── 0002.patch
-│   │           ├── 0002.output
-│   │           └── ...
-│   └── workspaces/                 # Git Worktree 目录
-│       └── <task_id>/              # 每个 task 一个 worktree
-└── ... (your code)
+~/.bar/
+└── projects/
+    └── <project_name>-<hash4>/     # 如 my-project-a3f2
+        ├── config.yaml             # 项目配置
+        ├── state.json              # 全局状态（当前 active task）
+        ├── tasks/                  # 任务数据
+        │   └── <task_id>/
+        │       ├── task.json       # 任务元信息
+        │       ├── ledger.jsonl    # 操作日志（JSONL 格式）
+        │       └── artifacts/      # 产物文件
+        │           ├── 0001.patch  # Step 1 的 diff
+        │           ├── 0001.output # Step 1 的输出
+        │           ├── 0002.patch
+        │           ├── 0002.output
+        │           └── ...
+        └── workspaces/             # Git Worktree 目录
+            └── <task_id>/          # 每个 task 一个 worktree
 ```
 
 ---
 
 ## 配置文件
 
-### `.bar/config.yaml`
+### `config.yaml`
 
-全局配置文件，`bar init` 时创建。
+项目配置文件，`bar init` 时创建，位于 `~/.bar/projects/<project>-<hash4>/config.yaml`。
 
 ```yaml
 version: 1
@@ -66,9 +68,9 @@ output:
 
 ---
 
-### `.bar/state.json`
+### `state.json`
 
-全局状态文件，记录当前 active task。
+项目状态文件，记录当前 active task，位于 `~/.bar/projects/<project>-<hash4>/state.json`。
 
 ```json
 {
@@ -385,7 +387,9 @@ Warning: deprecated API usage in utils.go
 
 ## Policy 文件
 
-### `.bar/policy.yaml`
+### `policy.yaml`
+
+Policy 文件位于项目根目录 `.bar/policy.yaml`（注意：这是项目内的配置，不在 `~/.bar` 中）。
 
 ```yaml
 version: 1

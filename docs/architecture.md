@@ -34,7 +34,9 @@
                                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                       Storage Layer                              │
-│    .bar/                                                         │
+│    ~/.bar/projects/<project>-<hash4>/                            │
+│    ├── state.json           # 全局状态                           │
+│    ├── config.yaml          # 配置文件                           │
 │    ├── tasks/<task_id>/                                         │
 │    │   ├── task.json        # Task 元信息                        │
 │    │   ├── ledger.jsonl     # Step 日志（追加写入）               │
@@ -93,7 +95,7 @@ type WorkspaceManager interface {
 **实现细节**：
 - 使用 `git worktree add` 创建隔离工作区
 - 分支命名：`bar/<task-name>-<short-id>`
-- Worktree 路径：`.bar/workspaces/<task_id>`
+- Worktree 路径：`~/.bar/projects/<project>-<hash4>/workspaces/<task_id>`
 
 ### 3. Ledger Manager (`internal/core/ledger`)
 
@@ -288,7 +290,7 @@ const (
 
 ### 1. 自定义 Policy
 
-用户可以在 `.bar/policy.yaml` 中定义自己的规则。
+用户可以在项目根目录的 `.bar/policy.yaml` 中定义自己的规则。
 
 ### 2. 自定义 Hooks
 

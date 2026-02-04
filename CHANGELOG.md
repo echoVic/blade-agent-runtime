@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.15] - 2026-02-04
+
+### Changed
+- **存档目录迁移**: 从项目内 `.bar/` 迁移到用户主目录 `~/.bar/projects/<project>-<hash4>/`
+- 发布脚本增强：支持 `patch/minor/major` 语义化版本命令
+
+### Added
+- `internal/util/path/path_test.go` 单元测试
+- `CHANGELOG.md` 变更日志
+
+### Removed
+- `checkGitignore()` 函数
+
+## [0.0.14] - 2026-02-04
+
+### Changed
+- **存档目录迁移**: 从项目内 `.bar/` 迁移到用户主目录 `~/.bar/projects/<project>-<hash4>/`
+
+### Added
+- `internal/util/path/path_test.go` 单元测试
+
+### Removed
+- `checkGitignore()` 函数
+
 ## [0.0.13] - 2026-02-01
 
 ### Changed

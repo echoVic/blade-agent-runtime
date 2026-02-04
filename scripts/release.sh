@@ -68,6 +68,57 @@ update_version() {
     sed -i '' "s/currentVersion = \".*\"/currentVersion = \"$version\"/" "$VERSION_FILE"
 }
 
+generate_changelog_content() {
+    local last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+    local range=""
+    
+    if [ -n "$last_tag" ]; then
+        range="$last_tag..HEAD"
+    else
+        range="HEAD"
+    fi
+    
+    local added="" changed="" fixed="" removed=""
+    
+    while IFS= read -r line; do
+        local type=$(echo "$line" | sed -n 's/^\([a-z]*\):.*/\1/p')
+        local msg=$(echo "$line" | sed 's/^[a-z]*: //')
+        
+        case "$type" in
+            feat)
+                added="$added\n- $msg"
+                ;;
+            fix)
+                fixed="$fixed\n- $msg"
+                ;;
+            refactor|perf|style)
+                changed="$changed\n- $msg"
+                ;;
+            *)
+                if [[ "$line" != chore:* && "$line" != docs:* && "$line" != test:* ]]; then
+                    changed="$changed\n- $line"
+                fi
+                ;;
+        esac
+    done < <(git log --pretty=format:"%s" $range 2>/dev/null)
+    
+    local content=""
+    if [ -n "$added" ]; then
+        content="$content\n### Added$added\n"
+    fi
+    if [ -n "$changed" ]; then
+        content="$content\n### Changed$changed\n"
+    fi
+    if [ -n "$fixed" ]; then
+        content="$content\n### Fixed$fixed\n"
+    fi
+    if [ -n "$removed" ]; then
+        content="$content\n### Removed$removed\n"
+    fi
+    
+    echo -e "$content"
+}
+
 update_changelog() {
     local version="$1"
     local date=$(date +%Y-%m-%d)
@@ -77,27 +128,43 @@ update_changelog() {
         return 0
     fi
     
-    echo "==> Updating CHANGELOG for $version"
+    echo "==> Generating CHANGELOG for $version"
+    
+    local changelog_content=$(generate_changelog_content)
+    
+    if [ -z "$changelog_content" ] || [ "$changelog_content" = $'\n' ]; then
+        echo "Warning: No commits found for changelog, using placeholder"
+        changelog_content="\n### Changed\n- Version bump\n"
+    fi
     
     local temp_file=$(mktemp)
-    local in_unreleased=0
-    local unreleased_content=""
+    local header_done=0
     
     while IFS= read -r line; do
+        echo "$line" >> "$temp_file"
         if [[ "$line" == "## [Unreleased]" ]]; then
-            in_unreleased=1
-            echo "$line" >> "$temp_file"
             echo "" >> "$temp_file"
             echo "## [$version] - $date" >> "$temp_file"
-        elif [[ "$line" =~ ^##\ \[.*\] && "$in_unreleased" -eq 1 ]]; then
-            in_unreleased=0
-            echo "$line" >> "$temp_file"
-        else
-            echo "$line" >> "$temp_file"
+            echo -e "$changelog_content" >> "$temp_file"
+            header_done=1
         fi
     done < "$CHANGELOG_FILE"
     
-    mv "$temp_file" "$CHANGELOG_FILE"
+    if [ "$header_done" -eq 0 ]; then
+        echo "Warning: No [Unreleased] section found, prepending to file"
+        local new_temp=$(mktemp)
+        head -n 6 "$CHANGELOG_FILE" > "$new_temp"
+        echo "" >> "$new_temp"
+        echo "## [Unreleased]" >> "$new_temp"
+        echo "" >> "$new_temp"
+        echo "## [$version] - $date" >> "$new_temp"
+        echo -e "$changelog_content" >> "$new_temp"
+        tail -n +7 "$CHANGELOG_FILE" >> "$new_temp"
+        mv "$new_temp" "$CHANGELOG_FILE"
+        rm -f "$temp_file"
+    else
+        mv "$temp_file" "$CHANGELOG_FILE"
+    fi
 }
 
 prepare_release() {

@@ -41,15 +41,14 @@ bar init [flags]
 
 **行为:**
 1. 检查当前目录是否是 git 仓库
-2. 创建 `.bar/` 目录结构
-3. 创建默认配置文件 `.bar/config.yaml`
-4. 添加 `.bar/workspaces/` 到 `.gitignore`
+2. 在 `~/.bar/projects/<project>-<hash4>/` 创建目录结构
+3. 创建默认配置文件
 
 **示例:**
 ```bash
 cd my-project
 bar init
-# Output: Initialized BAR in /path/to/my-project/.bar/
+# Output: Initialized BAR in ~/.bar/projects/my-project-a3f2/
 ```
 
 **错误情况:**
@@ -81,7 +80,7 @@ bar task start <name> [flags]
 
 **行为:**
 1. 生成唯一的 task ID（nanoid，8 字符）
-2. 创建 git worktree：`.bar/workspaces/<task_id>`
+2. 创建 git worktree
 3. 创建分支：`bar/<name>-<short_id>`
 4. 初始化 task.json 和 ledger.jsonl
 5. 设置为当前 active task
@@ -91,14 +90,12 @@ bar task start <name> [flags]
 bar task start fix-null-pointer
 # Output:
 # Created task: fix-null-pointer (id: abc123)
-# Workspace: .bar/workspaces/abc123
 # Branch: bar/fix-null-pointer-abc123
 # Switched to task: fix-null-pointer
 
 bar task start experiment --base develop --no-switch
 # Output:
 # Created task: experiment (id: def456)
-# Workspace: .bar/workspaces/def456
 # Branch: bar/experiment-def456
 ```
 
@@ -461,7 +458,7 @@ bar log --format markdown --output report.md
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `BAR_HOME` | BAR 数据目录 | .bar |
-| `BAR_CONFIG` | 配置文件路径 | .bar/config.yaml |
+| `BAR_HOME` | BAR 数据目录 | ~/.bar |
+| `BAR_CONFIG` | 配置文件路径 | ~/.bar/projects/<project>/config.yaml |
 | `BAR_VERBOSE` | 详细输出 | false |
 | `BAR_NO_COLOR` | 禁用颜色输出 | false |
