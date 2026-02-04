@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.19] - 2026-02-04
 
-### Changed
-- Version bump
+### Documentation
+- 更新发布脚本和变更日志格式
+
+### Chore
+- 修复 CHANGELOG 生成脚本兼容 macOS bash 3.x
 
 
 ## [0.0.18] - 2026-02-04
